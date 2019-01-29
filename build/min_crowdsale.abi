@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Tue Jan 29 10:41:21 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Tue Jan 29 15:26:48 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -39,6 +39,26 @@
             ]
         },
         {
+            "name": "setfinish",
+            "base": "",
+            "fields": [
+                {
+                    "name": "finish",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
+            "name": "setstart",
+            "base": "",
+            "fields": [
+                {
+                    "name": "start",
+                    "type": "time_point_sec"
+                }
+            ]
+        },
+        {
             "name": "transfer",
             "base": "",
             "fields": [
@@ -66,6 +86,16 @@
         {
             "name": "init",
             "type": "init",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setfinish",
+            "type": "setfinish",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setstart",
+            "type": "setstart",
             "ricardian_contract": ""
         },
         {

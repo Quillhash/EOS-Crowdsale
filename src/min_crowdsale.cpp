@@ -76,17 +76,18 @@ void min_crowdsale::handle_investment(eosio::name investor, eosio::asset quantit
     }
 
     // set the amounts to transfer, then call inline issue action to update balances in the token contract
-    // eosio::asset amount = eosio::asset(tokens_to_give, quantity.symbol);
-    // this->inline_issue(investor, amount, "Crowdsale deposit");
-
-    // this->inline_transfer(investor, get_self(), quantity, "Crowdsale deposit");
+    eosio::asset amount = eosio::asset(tokens_to_give, eosio::symbol("QUI", 4));
+    this->inline_issue(investor, amount, "Crowdsale deposit");
 }
 
 // handle transfers to this contract
 void min_crowdsale::transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo)
 {
+    eosio::print("Debug: Invested amount ");
+    eosio::print(std::to_string(quantity.amount));
+
     // funds were sent to this contract only
-    eosio_assert(this->_self == to, "Crowdsale must be the reciever");
+    //eosio_assert(this->_self == to, "Crowdsale must be the reciever");
 
     // check timings of the eos crowdsale
     eosio_assert(NOW >= this->state.start.utc_seconds, "Crowdsale hasn't started");
@@ -110,19 +111,34 @@ void min_crowdsale::transfer(eosio::name from, eosio::name to, eosio::asset quan
     this->handle_investment(from, quantity);
 }
 
+void min_crowdsale::setstart(eosio::time_point_sec start)
+{
+    require_auth(this->state.issuer);
+    eosio_assert(NOW <= this->state.start.utc_seconds, "Crowdsale already started");
+
+    this->state.start = start;
+}
+
+void min_crowdsale::setfinish(eosio::time_point_sec finish)
+{
+    require_auth(this->state.issuer);
+    eosio_assert(NOW <= this->state.finish.utc_seconds, "Crowdsale already finished");
+
+    this->state.finish = finish;
+}
+
 // custom dispatcher that handles token transfers from quillhash111 token contract
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
 {
     if (code == eosio::name("eosio.token").value && action == eosio::name("transfer").value) // handle actions from eosio.token contract
     {
-        eosio::print("was inside dispatcher ");
         eosio::execute_action(eosio::name(receiver), eosio::name(code), &min_crowdsale::transfer);
     }
     else if (code == receiver) // for other (direct) actions
     {
         switch (action)
         {
-            EOSIO_DISPATCH_HELPER(min_crowdsale, (init)(transfer));
+            EOSIO_DISPATCH_HELPER(min_crowdsale, (init)(transfer)(setstart)(setfinish));
         }
     }
 }

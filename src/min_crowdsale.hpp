@@ -24,9 +24,9 @@ CONTRACT min_crowdsale : public eosio::contract
 
     ACTION transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo); // redirect to invest
 
-    // ACTION setstart(); // start crowdsale
+    ACTION setstart(eosio::time_point_sec start); // start crowdsale
 
-    // ACTION setfinish(); // stop a crowdsale
+    ACTION setfinish(eosio::time_point_sec finish); // stop a crowdsale
 
     // ACTION withdraw(); // transfer tokens from the contract account to the issuer
 
@@ -43,11 +43,11 @@ CONTRACT min_crowdsale : public eosio::contract
         // utility method for converting this object to string
         std::string toString()
         {
-            std::string str = "ISSUER " + this->issuer.to_string() +
-                              "\nEOSES " + std::to_string(this->total_eoses) +
-                              "\nTOKENS " + std::to_string(this->total_tokens) +
-                              "\nSTART " + std::to_string(this->start.utc_seconds) +
-                              "\nFINISH " + std::to_string(this->finish.utc_seconds);
+            std::string str = " ISSUER " + this->issuer.to_string() +
+                              " EOSES " + std::to_string(this->total_eoses) +
+                              " TOKENS " + std::to_string(this->total_tokens) +
+                              " START " + std::to_string(this->start.utc_seconds) +
+                              " FINISH " + std::to_string(this->finish.utc_seconds);
 
             return str;
         }
@@ -88,7 +88,7 @@ CONTRACT min_crowdsale : public eosio::contract
 
         // create an instance of the action sender and call send function on it
         eosio::action issue_action = eosio::action(
-            eosio::permission_level(this->state.issuer, "active"_n),
+            eosio::permission_level(this->_self, "active"_n),
             eosio::name("eosio.token"), // name of the contract
             eosio::name("issue"),
             issue{to, quantity, memo});

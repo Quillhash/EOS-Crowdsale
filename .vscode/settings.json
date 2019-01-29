@@ -7,5 +7,6 @@
     "unordered_map": "cpp",
     "string_view": "cpp"
 },
-"C_Cpp.intelliSenseEngineFallback": "Enabled"
+"C_Cpp.intelliSenseEngineFallback": "Enabled",
+"C_Cpp.dimInactiveRegions": false
 }
