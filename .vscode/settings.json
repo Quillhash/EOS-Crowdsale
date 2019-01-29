@@ -1,8 +1,11 @@
 {
    "files.associations": {
-      "functional": "cpp",
-      "__config": "cpp",
-      "*.ipp": "cpp"
+    "functional": "cpp",
+    "__config": "cpp",
+    "*.ipp": "cpp",
+    "*.tcc": "cpp",
+    "unordered_map": "cpp",
+    "string_view": "cpp"
 },
 "C_Cpp.intelliSenseEngineFallback": "Enabled"
 }

@@ -5,7 +5,7 @@
 // #define TRANSFERABLE false  // lock tokens untill crowdfunding is finished
 #define RATE 150
 #define RATE_DENOM 100
-#define MIN_CONTRIB 1000
+#define MIN_CONTRIB 10
 #define MAX_CONTRIB 10000000000
 #define SOFT_CAP_TKN 1000000000
 #define HARD_CAP_TKN 10000000000

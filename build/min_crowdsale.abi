@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Thu Jan 24 17:36:28 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Tue Jan 29 10:41:21 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -39,16 +39,24 @@
             ]
         },
         {
-            "name": "invest",
+            "name": "transfer",
             "base": "",
             "fields": [
                 {
-                    "name": "investor",
+                    "name": "from",
+                    "type": "name"
+                },
+                {
+                    "name": "to",
                     "type": "name"
                 },
                 {
                     "name": "quantity",
                     "type": "asset"
+                },
+                {
+                    "name": "memo",
+                    "type": "string"
                 }
             ]
         }
@@ -61,8 +69,8 @@
             "ricardian_contract": ""
         },
         {
-            "name": "invest",
-            "type": "invest",
+            "name": "transfer",
+            "type": "transfer",
             "ricardian_contract": ""
         }
     ],

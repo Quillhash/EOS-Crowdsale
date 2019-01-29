@@ -14,17 +14,7 @@ min_crowdsale::min_crowdsale(eosio::name self, eosio::name code, eosio::datastre
                                                                                                        state_singleton(this->_self, this->_self.value), // code and scope both set to the contract's account
                                                                                                        deposits(this->_self, this->_self.value),
                                                                                                        state(state_singleton.exists() ? state_singleton.get() : default_parameters())
-                                                                                                    //    asset_eos( // initialize eos asset
-                                                                                                    //        eosio::asset(0, eosio::string_to_symbol(4, "EOS")),
-                                                                                                    //        "eosio.token"_n),
-                                                                                                    //    asset_tkn(
-                                                                                                    //        eosio::asset(0, eosio::string_to_symbol(DECIMALS, STR(SYMBOL))),
-                                                                                                    //        eosio::string_to_name(STR(CONTRACT)))
-//    issuer("quilltest111"_n)
 {
-    eosio::print("Inside constructor\n");
-    //eosio::print(self);
-    eosio::print("\n");
 }
 
 // destructor
@@ -32,7 +22,7 @@ min_crowdsale::~min_crowdsale()
 {
     this->state_singleton.set(this->state, this->_self); // persist the state of the crowdsale before destroying instance
 
-    eosio::print("Saving state to the RAM\n");
+    eosio::print("Saving state to the RAM ");
     eosio::print(this->state.toString());
 }
 
@@ -49,35 +39,14 @@ void min_crowdsale::init(eosio::name issuer, eosio::time_point_sec start, eosio:
     this->state.finish = finish;
 }
 
-// invest EOS and fet tokens
-void min_crowdsale::invest(eosio::name investor , eosio::asset quantity)
+// update contract balances and send tokens to the investor
+void min_crowdsale::handle_investment(eosio::name investor, eosio::asset quantity)
 {
-    require_auth(investor); // only caller can invest
-
-    eosio::print("Inside the invest action\n");
-    eosio::print(investor);
-    eosio::print("\n");
-
-    // check timings of the eos crowdsale
-    eosio_assert(NOW >= this->state.start.utc_seconds, "Crowdsale hasn't started");
-    eosio_assert(NOW <= this->state.finish.utc_seconds, "Crowdsale finished");
-
-    // check the minimum and maximum contribution
-    eosio_assert(quantity.amount >= MIN_CONTRIB, "Contribution too low");
-    eosio_assert((quantity.amount <= MAX_CONTRIB) || !MAX_CONTRIB, "Contribution too high");
-
     // hold the reference to the investor stored in the RAM
     auto it = this->deposits.find(investor.value);
 
     // calculate from EOS to tokens
     int64_t tokens_to_give = EOS2TKN(quantity.amount);
-
-    // update total eos obtained and tokens distributed
-    this->state.total_eoses += quantity.amount;
-    this->state.total_tokens += tokens_to_give;
-
-    // check if the hard cap was reached
-    eosio_assert(this->state.total_tokens <= HARD_CAP_TKN, "Hard cap reached");
 
     // if the depositor account was found, store his updated balances
     int64_t entire_eoses = quantity.amount;
@@ -107,11 +76,53 @@ void min_crowdsale::invest(eosio::name investor , eosio::asset quantity)
     }
 
     // set the amounts to transfer, then call inline issue action to update balances in the token contract
-    eosio::asset amount = eosio::asset(tokens_to_give, quantity.symbol);
+    // eosio::asset amount = eosio::asset(tokens_to_give, quantity.symbol);
     // this->inline_issue(investor, amount, "Crowdsale deposit");
 
-    this->inline_transfer(investor, get_self(), quantity, "Crowdsale deposit");
+    // this->inline_transfer(investor, get_self(), quantity, "Crowdsale deposit");
 }
 
-EOSIO_DISPATCH(min_crowdsale, (init)(invest))
-// EOSIO_DISPATCH(min_crowdsale, (hi))
+// handle transfers to this contract
+void min_crowdsale::transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo)
+{
+    // funds were sent to this contract only
+    eosio_assert(this->_self == to, "Crowdsale must be the reciever");
+
+    // check timings of the eos crowdsale
+    eosio_assert(NOW >= this->state.start.utc_seconds, "Crowdsale hasn't started");
+    eosio_assert(NOW <= this->state.finish.utc_seconds, "Crowdsale finished");
+
+    // check the minimum and maximum contribution
+    eosio_assert(quantity.amount >= MIN_CONTRIB, "Contribution too low");
+    eosio_assert((quantity.amount <= MAX_CONTRIB) /*|| !MAX_CONTRIB*/, "Contribution too high");
+
+    // calculate from EOS to tokens
+    int64_t tokens_to_give = EOS2TKN(quantity.amount);
+
+    // update total eos obtained and tokens distributed
+    this->state.total_eoses += quantity.amount;
+    this->state.total_tokens += tokens_to_give;
+
+    // check if the hard cap was reached
+    eosio_assert(this->state.total_tokens <= HARD_CAP_TKN, "Hard cap reached");
+
+    // handle investment
+    this->handle_investment(from, quantity);
+}
+
+// custom dispatcher that handles token transfers from quillhash111 token contract
+extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
+{
+    if (code == eosio::name("eosio.token").value && action == eosio::name("transfer").value) // handle actions from eosio.token contract
+    {
+        eosio::print("was inside dispatcher ");
+        eosio::execute_action(eosio::name(receiver), eosio::name(code), &min_crowdsale::transfer);
+    }
+    else if (code == receiver) // for other (direct) actions
+    {
+        switch (action)
+        {
+            EOSIO_DISPATCH_HELPER(min_crowdsale, (init)(transfer));
+        }
+    }
+}

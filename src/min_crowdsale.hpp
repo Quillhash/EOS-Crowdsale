@@ -22,7 +22,7 @@ CONTRACT min_crowdsale : public eosio::contract
 
     ACTION init(eosio::name issuer, eosio::time_point_sec start, eosio::time_point_sec finish); // initialize the crowdsale
 
-    ACTION invest(eosio::name investor, eosio::asset quantity); // transfer crowdsale tokens to the investor
+    ACTION transfer(eosio::name from, eosio::name to, eosio::asset quantity, std::string memo); // redirect to invest
 
     // ACTION setstart(); // start crowdsale
 
@@ -72,16 +72,8 @@ CONTRACT min_crowdsale : public eosio::contract
     // hold present state of the application
     state_t state;
 
-    // /**
-    //  * Extended Assets store assets and owner account information along with it.
-    //  * These two variables are used to keep eos and token balances of the contract.
-    //  *
-    //  */
-    // eosio::extended_asset asset_eos; // hold eos
-    // eosio::extended_asset asset_tkn; // hold native tokens
-
-    // issuer account
-    // eosio::name issuer;
+    // handle investments on token transfers
+    void handle_investment(eosio::name investor, eosio::asset quantity);
 
     // private function to call issue action from inside the contract
     void inline_issue(eosio::name to, eosio::asset quantity, std::string memo) const
@@ -97,8 +89,8 @@ CONTRACT min_crowdsale : public eosio::contract
         // create an instance of the action sender and call send function on it
         eosio::action issue_action = eosio::action(
             eosio::permission_level(this->state.issuer, "active"_n),
-            "quillhash111"_n, // name of the contract
-            "issue"_n,
+            eosio::name("eosio.token"), // name of the contract
+            eosio::name("issue"),
             issue{to, quantity, memo});
 
         issue_action.send();
@@ -116,14 +108,13 @@ CONTRACT min_crowdsale : public eosio::contract
         };
 
         eosio::action transfer_action = eosio::action(
-            eosio::permission_level(get_self(), "active"_n),
-            "quillhash111"_n, // name of the contract
-            "transfer"_n,
+            eosio::permission_level(_self, eosio::name("active")),
+            eosio::name("eosio.token"), // name of the contract
+            eosio::name("transfer"),
             transfer{from, to, quantity, memo});
 
         transfer_action.send();
     }
-
 
     // a utility function to return default parameters for the state of the crowdsale
     state_t default_parameters() const
