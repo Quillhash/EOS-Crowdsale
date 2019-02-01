@@ -28,7 +28,7 @@ CONTRACT min_crowdsale : public eosio::contract
 
     ACTION setfinish(eosio::time_point_sec finish); // stop a crowdsale
 
-    // ACTION withdraw(); // transfer tokens from the contract account to the issuer
+    ACTION withdraw(); // transfer tokens from the contract account to the issuer
 
   private:
     // type for defining state

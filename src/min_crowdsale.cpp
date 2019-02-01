@@ -121,10 +121,24 @@ void min_crowdsale::setstart(eosio::time_point_sec start)
 
 void min_crowdsale::setfinish(eosio::time_point_sec finish)
 {
-    require_auth(this->state.issuer);
-    eosio_assert(NOW <= this->state.finish.utc_seconds, "Crowdsale already finished");
+    // require_auth(this->state.issuer);
+    // eosio_assert(NOW <= this->state.finish.utc_seconds, "Crowdsale already finished");
 
-    this->state.finish = finish;
+    // // check if greater than start time
+    // eosio_assert(finish.utc_seconds > this->state.start.utc_seconds, "Finish can not be be");
+
+    // this->state.finish = finish;
+}
+
+void min_crowdsale::withdraw()
+{
+    // require_auth(this->state.issuer);
+
+    // eosio_assert(NOW >= this->state.finish.utc_seconds, "Crowdsale not ended yet" );
+    // eosio_assert(this->state.total_eoses >= SOFT_CAP_TKN, "Soft cap was not reached");
+
+    // eosio::asset amount = eosio::asset()
+    // this->inline_transfer(this->_self, this->state.issuer);
 }
 
 // custom dispatcher that handles token transfers from quillhash111 token contract
@@ -138,7 +152,7 @@ extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action)
     {
         switch (action)
         {
-            EOSIO_DISPATCH_HELPER(min_crowdsale, (init)(transfer)(setstart)(setfinish));
+            EOSIO_DISPATCH_HELPER(min_crowdsale, (init)(transfer)(setstart)(setfinish)(withdraw));
         }
     }
 }

@@ -69,7 +69,8 @@
                     "shell": {
                         "executable": "bash.exe",
                         "args": [
-                            "-c"
+                            "-c",
+                            "-V"
                         ]
                     }
                 },            

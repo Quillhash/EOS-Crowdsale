@@ -5,24 +5,32 @@ verbosity([Verbosity.INFO, Verbosity.OUT, Verbosity.DEBUG])
 CONTRACT_WORKSPACE = sys.path[0] + "/../"
 TOKEN_CONTRACT_WORKSPACE = sys.path[0] + "/../../quilltoken/"
 
+
 def test():
     SCENARIO('''
     Execute simple actions.
     ''')
     reset()
-    create_master_account("master")
+    create_master_account("eosio")
 
     #######################################################################################################
-    # accounts where the smart contracts will be hosted
-    create_account("host", master)
-    create_account("token", master, account_name="eosio.token")
+    COMMENT('''
+    Create test accounts:
+    ''')
 
+    # test accounts and accounts where the smart contracts will be hosted
+    create_account("alice", eosio, account_name="alice")
+    create_account("crowdsale", eosio, account_name="crowdsale")
+    create_account("eosiotoken", eosio, account_name="eosio.token")
+    create_account("issuer", eosio, account_name="issuer")
+
+    ########################################################################################################
     COMMENT('''
     Build and deploy token contract:
     ''')
 
     # creating token contract
-    token_contract = Contract(token, TOKEN_CONTRACT_WORKSPACE)
+    token_contract = Contract(eosiotoken, TOKEN_CONTRACT_WORKSPACE)
     token_contract.build(force=True)
     token_contract.deploy()
 
@@ -32,72 +40,65 @@ def test():
     ''')
 
     # creating crowdsale contract
-    contract = Contract(host, CONTRACT_WORKSPACE)
+    contract = Contract(crowdsale, CONTRACT_WORKSPACE)
     contract.build(force=True)
     contract.deploy()
 
     ########################################################################################################
     COMMENT('''
-    Create test accounts:
+    Create SYS tokens 
     ''')
 
-    create_account("issuer", master)
-    create_account("alice", master)
-    create_account("carol", master)
-
-    ########################################################################################################
-    COMMENT('''
-    Create EOS tokens 
-    ''')
-
-    token.push_action(
+    token_contract.push_action(
         "create",
         {
-            "issuer": token,
+            "issuer": eosio,
             "maximum_supply": "1000000000.0000 SYS"
         },
-        [token]
+        [eosiotoken]
+    )
+
+     ########################################################################################################
+    COMMENT('''
+    Create QUI tokens 
+    ''')
+
+    token_contract.push_action(
+        "create",
+        {
+            "issuer": crowdsale,
+            "maximum_supply": "1000000000.0000 QUI"
+        },
+        [eosiotoken]
     )
 
     ########################################################################################################
-    # COMMENT('''
-    # Create QUILL tokens 
-    # ''')
-
-    # token.push_action(
-    #     "create",
-    #     {
-    #         "issuer": issuer,
-    #         "maximum_supply": "1000000000 QUILL"
-    #     },
-    #     [token]
-    # )
-
-    ########################################################################################################
     COMMENT('''
-    Issue SYS tokens to the sub accounts 
+    Issue SYS tokens to alice 
     ''')
 
-    # give tokens to alice
-    token.push_action(
+    token_contract.push_action(
         "issue",
         {
             "to": alice,
-            "quantity": "10000.0000 SYS",
+            "quantity": "100000.0000 SYS",
             "memo": "issued tokens to alice"
         },
-        [token]
+        [eosio]
     )
 
-    # give tokens to carol
-    token.push_action(
-        "issue",
+    ########################################################################################################
+    COMMENT('''
+    Create QUILL tokens 
+    ''')
+
+    token_contract.push_action(
+        "create",
         {
-            "to": carol,
-            "quantity": "10000.0000 SYS",
-            "memo": "issued tokens to carol"
+            "issuer": issuer,
+            "maximum_supply": "1000000000.0000 QUILL"
         },
-        [token]
+        [eosiotoken]
     )
 
     ########################################################################################################
@@ -105,14 +106,14 @@ def test():
     Initialize the crowdsale
     ''')
 
-    host.push_action(
+    contract.push_action(
         "init",
         {
             "issuer": issuer,
-            "start": "2006-01-01T00:00:00",
+            "start": "2019-02-01T00:00:00",
             "finish": "2020-04-20T00:00:00"
         },
-        [host]
+        [crowdsale]
     )
 
     ########################################################################################################
@@ -121,13 +122,13 @@ def test():
     ''')
 
     # set eosio.code permission to the contract
-    host.set_account_permission(
+    crowdsale.set_account_permission(
         Permission.ACTIVE,
         {
             "threshold": 1,
             "keys": [
                 {
-                    "key": host.active(),
+                    "key": crowdsale.active(),
                     "weight": 1
                 }
             ],
@@ -136,7 +137,7 @@ def test():
                 {
                     "permission":
                         {
-                            "actor": host,
+                            "actor": crowdsale,
                             "permission": "eosio.code"
                         },
                     "weight": 1
@@ -144,42 +145,30 @@ def test():
             ]
         },
         Permission.OWNER,
-        (host, Permission.OWNER)
+        (crowdsale, Permission.OWNER)
     )
 
     # transfer EOS tokens from alice to the host (contract) accounts
-    token.push_action(
+    eosiotoken.push_action(
         "transfer",
         {
             "from": alice,
-            "to": host,
-            "quantity": "10.0000 SYS",
-            "memo": "Invested 10 SYS in crowdsale"
+            "to": crowdsale,
+            "quantity": "25.0000 SYS",
+            "memo": "Invested 25 SYS in crowdsale"
         },
         permission=(alice, Permission.ACTIVE)
     )
 
-    # deposit some funds
-    # host.push_action(
-    #     "invest",
-    #     {
-    #         "investor": alice,
-    #         "quantity": "10000 EOS"
-    #     },
-    #     permission=(alice, Permission.ACTIVE)
-    # )
+    ########################################################################################################
+    COMMENT('''
+    Check table of the crowdsale contract 
+    ''')
 
-    # assert("host" in DEBUG())
-
-    # host.push_action(
-    #     "testaction",
-    #     {
-    #         "sender": alice
-    #     },
-    #     permission=(alice, Permission.ACTIVE)
-    # )
+    crowdsale.table("deposit", crowdsale)
 
     stop()
+
 
 if __name__ == "__main__":
     test()

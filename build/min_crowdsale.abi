@@ -1,5 +1,5 @@
 {
-    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Tue Jan 29 15:26:48 2019",
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT Fri Feb  1 18:17:13 2019",
     "version": "eosio::abi/1.1",
     "structs": [
         {
@@ -79,6 +79,11 @@
                     "type": "string"
                 }
             ]
+        },
+        {
+            "name": "withdraw",
+            "base": "",
+            "fields": []
         }
     ],
     "types": [],
@@ -101,6 +106,11 @@
         {
             "name": "transfer",
             "type": "transfer",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "withdraw",
+            "type": "withdraw",
             "ricardian_contract": ""
         }
     ],
